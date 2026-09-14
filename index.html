@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>第一回化学グランプリ模試</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div>
+      <div class="eyebrow">CHEMISTRY GRAND PRIX MOCK</div>
+      <h1>第一回化学グランプリ模試</h1>
+    </div>
+    <span id="unlockBadge" class="badge hidden">自己採点登録済み</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">一次選考</p>
+      <h2>問題を閲覧して、自己採点できます。</h2>
+      <p>2026年9月13日実施。問題PDFはいつでも閲覧できます。自己採点を登録すると、解答・解説PDFのロックが解除されます。</p>
+    </div>
+    <div class="hero-actions">
+      <a class="button primary" href="pdfs/question.pdf">問題PDFを開く</a>
+      <a id="answerLink" class="button secondary locked" href="#score">🔒 解答・解説</a>
+    </div>
+  </section>
+
+  <section class="card" id="score">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">SELF SCORING</p>
+        <h2>自己採点</h2>
+      </div>
+      <div class="total-mini">合計 <strong id="miniTotal">—</strong> / 300</div>
+    </div>
+    <p class="notice">各 Q の欄を、実際のマークシートと同じ数字（①〜⓪ → 1〜0）で入力してください。複数の正答がある設問は、正答として示されている数字をいずれも正解として判定します。「自己採点を登録」を押すと総合得点が表示され、解答・解説が閲覧可能になります。</p>
+    <div id="examTabs" class="tabs"></div>
+    <div id="questions"></div>
+    <div class="submit-area">
+      <button id="submitBtn" class="button primary large">自己採点を登録して得点を表示</button>
+      <p id="saveMessage" class="save-message"></p>
+    </div>
+  </section>
+
+  <section id="result" class="result card hidden">
+    <p class="eyebrow">RESULT</p>
+    <h2>自己採点結果</h2>
+    <div class="score-big"><span id="totalScore">0</span><small> / 300</small></div>
+    <div class="rate" id="scoreRate">0.0%</div>
+    <div class="judgment-box">
+      <div class="judgment-grade" id="judgmentGrade">—</div>
+      <div>
+        <strong id="judgmentMessage">—</strong>
+        <p>得点に応じた判定です。</p>
+      </div>
+    </div>
+    <div id="breakdown" class="breakdown"></div>
+    <div class="judgment-table-wrap">
+      <h3>判定基準</h3>
+      <table class="judgment-table">
+        <thead><tr><th>得点</th><th>判定</th></tr></thead>
+        <tbody>
+          <tr><td>250〜300点</td><td>A</td></tr>
+          <tr><td>220〜249点</td><td>B</td></tr>
+          <tr><td>180〜219点</td><td>C</td></tr>
+          <tr><td>150〜179点</td><td>D</td></tr>
+          <tr><td>0〜149点</td><td>E</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="unlock-box">
+      <div><strong>🔓 解答・解説のロックが解除されました</strong><p>この端末・ブラウザでは、今後もロック解除状態を維持します。</p></div>
+      <a class="button primary" href="pdfs/answer.pdf">解答・解説PDFを開く</a>
+    </div>
+  </section>
+
+  <section class="card guide">
+    <h2>使い方</h2>
+    <ol>
+      <li>「問題PDFを開く」から問題冊子を閲覧します。</li>
+      <li>各 Q の自分の解答を入力します。</li>
+      <li>「自己採点を登録して得点を表示」を押します。</li>
+      <li>総合得点と各問題の得点が表示され、解答・解説PDFが開けるようになります。</li>
+    </ol>
+    <p class="small">※ この版はブラウザのローカル保存（localStorage）を使用します。第4問は解答解説に記載された複数正答（Q22：⑥/⑦、Q37：⑤/⑥）に対応しています。別のスマホ・PCでも同じ登録状態にしたい場合は、次の段階でログイン＋クラウド保存（Supabase等）を追加できます。</p>
+  </section>
+</main>
+
+<footer class="site-footer"><div class="wrap">第一回化学グランプリ模試</div></footer>
+<script src="app.js"></script>
+</body>
+</html>
