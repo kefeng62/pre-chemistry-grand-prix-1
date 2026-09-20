@@ -156,6 +156,14 @@ function getJudgment(score){
   return ['E','形式に慣れ、とるべき問題を見分けよう！'];
 }
 
+function updateXShare(){
+  const scores = [1,2,3,4].map(id => calcExam(id));
+  const t = scores.reduce((sum, score) => sum + score, 0);
+  const siteUrl = window.location.href.split('#')[0];
+  const shareText = `あなたの第一回化学グランプリ模試の結果は${scores[0]}・${scores[1]}・${scores[2]}・${scores[3]}で${t}点でした！\n${siteUrl}`;
+  $('xShare').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
+}
+
 function showResult(){
   const t=total();
   const [grade,message]=getJudgment(t);
@@ -167,6 +175,7 @@ function showResult(){
   $('judgmentGrade').textContent=grade;
   $('judgmentMessage').textContent=message;
   $('breakdown').innerHTML=[1,2,3,4].map(id=>`<div class="breakdown-item"><strong>${calcExam(id)} / 75</strong><span>${exams[id].name}</span></div>`).join('');
+  updateXShare();
   $('answerLink').classList.remove('locked');
   $('answerLink').textContent='🔓 解答・解説を見る';
   $('answerLink').href='pdfs/answer.pdf';
