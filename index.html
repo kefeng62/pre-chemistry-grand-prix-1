@@ -45,18 +45,18 @@
       </div>
       <div class="total-mini">合計 <strong id="miniTotal">—</strong> / 300</div>
     </div>
-    <p class="notice">各 Q の欄を、実際のマークシートと同じ数字（①〜⓪ → 1〜0）で入力してください。複数の正答がある設問は、正答として示されている数字をいずれも正解として判定します。「自己採点を登録」を押すと総合得点が表示され、解答・解説が閲覧可能になります。</p>
+    <p class="notice">各 Q の欄を、実際のマークシートと同じ数字（①〜⓪ → 1〜0）で入力してください。複数の正答がある設問は、正答として示されている数字をいずれも正解として判定します。「自己採点を登録」を押すと総合得点が表示され、解答・解説が閲覧可能になります。自己採点結果は何度でも修正可能です。各問題を一括で満点にする機能もあります。不正解よりも正解の方が多い自信がある場合はそちらをご利用ください。</p>
     <div id="examTabs" class="tabs"></div>
     <div id="questions"></div>
     <div class="quick-actions">
   <button id="fullScoreBtn" class="button secondary" type="button">
-    一括満点
+    この大問を一括満点
   </button>
+
   <button id="resetBtn" class="button secondary" type="button">
-    自己採点をリセット
+    この大問をリセット
   </button>
 </div>
-
     <div class="submit-area">
       <button id="submitBtn" class="button primary large">自己採点を登録して得点を表示</button>
       <p id="saveMessage" class="save-message"></p>
@@ -84,7 +84,7 @@
     </section>
     <div class="share-area">
       <a id="xShare" class="button x-share" href="#" target="_blank" rel="noopener">𝕏 Xで結果をシェア</a>
-      <p class="small">各大問の得点・総合得点とサイトのリンクをXに投稿できます。</p>
+      <p class="small">各大問の得点・総合得点とサイトのリンクをXに投稿できます。ぜひシェアお願いします！</p>
     </div>
     <div class="judgment-table-wrap">
       <h3>判定基準</h3>
@@ -113,7 +113,7 @@
       <li>「自己採点を登録して得点を表示」を押します。</li>
       <li>総合得点と各問題の得点が表示され、解答・解説PDFが開けるようになります。</li>
     </ol>
-    <p class="small">※ この版はブラウザのローカル保存（localStorage）を使用します。第4問は解答解説に記載された複数正答（Q22：⑥/⑦、Q37：⑤/⑥）に対応しています。別のスマホ・PCでも同じ登録状態にしたい場合は、次の段階でログイン＋クラウド保存（Supabase等）を追加できます。</p>
+    <p class="small">※ この版はブラウザのローカル保存（localStorage）を使用します。別のスマホ・PCでも同じ登録状態にしたい場合は、次の段階でログイン＋クラウド保存（Supabase等）を追加できます。</p>
   </section>
 </main>
 
