@@ -293,3 +293,6 @@ $('resetBtn').addEventListener('click', resetScoring);
 $('submitBtn').addEventListener('click',showResult);
 renderQuestions();
 if(state.submitted) showResult();
+
+$('fullScoreBtn').addEventListener('click', fillFullScore);
+$('resetBtn').addEventListener('click', resetScoring);
