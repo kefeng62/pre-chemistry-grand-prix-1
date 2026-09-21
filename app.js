@@ -204,15 +204,7 @@ async function saveAndLoadStatistics(){
   const row={visitor_id:getVisitorId(),exam1:scores[0],exam2:scores[1],exam3:scores[2],exam4:scores[3],total_score:totalScore,judgment:statsGrade(totalScore)};
   const {error:upsertError}=await window.supabaseClient.from('exam_results').upsert(row,{onConflict:'visitor_id'});
   if(upsertError){ console.error(upsertError); $('statisticsMessage').textContent='統計の登録に失敗しました。Supabaseの設定とRLSを確認してください。'; return; }
-  // Supabase側でも問題1〜4がすべて1点以上の行だけを取得し、
-  // 0点を含む登録が統計へ混入しないようにします。
-  const {data,error}=await window.supabaseClient
-    .from('exam_results')
-    .select('exam1,exam2,exam3,exam4,total_score,judgment')
-    .gt('exam1',0)
-    .gt('exam2',0)
-    .gt('exam3',0)
-    .gt('exam4',0);
+  const {data,error}=await window.supabaseClient.from('exam_results').select('exam1,exam2,exam3,exam4,total_score,judgment');
   if(error){ console.error(error); $('statisticsMessage').textContent='統計の読み込みに失敗しました。'; return; }
   renderStatistics(data||[]);
 }
