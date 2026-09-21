@@ -184,12 +184,14 @@ function getVisitorId(){
 function statsGrade(score){ return getJudgment(score)[0]; }
 function statNumber(v){ return Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') : '—'; }
 function renderStatistics(rows){
+  // 問題1〜4のいずれかが0点の登録は、統計の対象外にします。
+  const eligibleRows = rows.filter(r => [1,2,3,4].every(id => Number(r['exam'+id]) > 0));
   const examsStats = [1,2,3,4].map(id=>{
-    const values=rows.map(r=>Number(r['exam'+id])).filter(Number.isFinite);
+    const values=eligibleRows.map(r=>Number(r['exam'+id])).filter(Number.isFinite);
     return {name:exams[id].name, count:values.length, max:values.length?Math.max(...values):null, avg:values.length?values.reduce((a,b)=>a+b,0)/values.length:null};
   });
-  const totals=rows.map(r=>Number(r.total_score)).filter(Number.isFinite);
-  const grades=['A','B','C','D','E'].map(g=>({grade:g,count:rows.filter(r=>r.judgment===g).length}));
+  const totals=eligibleRows.map(r=>Number(r.total_score)).filter(Number.isFinite);
+  const grades=['A','B','C','D','E'].map(g=>({grade:g,count:eligibleRows.filter(r=>r.judgment===g).length}));
   const summary=`<div class="stats-summary"><div><strong>総合登録者数</strong><span>${totals.length}人</span></div><div><strong>総合最高点</strong><span>${totals.length?Math.max(...totals):'—'}点</span></div><div><strong>総合平均点</strong><span>${totals.length?statNumber(totals.reduce((a,b)=>a+b,0)/totals.length):'—'}点</span></div></div>`;
   const table=`<div class="stats-table-wrap"><table class="stats-table"><thead><tr><th>対象</th><th>登録者数</th><th>最高点</th><th>平均点</th></tr></thead><tbody>${examsStats.map(x=>`<tr><td>${x.name}</td><td>${x.count}人</td><td>${x.max===null?'—':x.max+'点'}</td><td>${x.avg===null?'—':statNumber(x.avg)+'点'}</td></tr>`).join('')}<tr><td><strong>総合得点</strong></td><td>${totals.length}人</td><td>${totals.length?Math.max(...totals)+'点':'—'}</td><td>${totals.length?statNumber(totals.reduce((a,b)=>a+b,0)/totals.length)+'点':'—'}</td></tr></tbody></table></div><h4>判定別人数</h4><div class="grade-stats">${grades.map(g=>`<span><strong>${g.grade}</strong> ${g.count}人</span>`).join('')}</div>`;
   $('statisticsContent').innerHTML=summary+table;
@@ -202,7 +204,15 @@ async function saveAndLoadStatistics(){
   const row={visitor_id:getVisitorId(),exam1:scores[0],exam2:scores[1],exam3:scores[2],exam4:scores[3],total_score:totalScore,judgment:statsGrade(totalScore)};
   const {error:upsertError}=await window.supabaseClient.from('exam_results').upsert(row,{onConflict:'visitor_id'});
   if(upsertError){ console.error(upsertError); $('statisticsMessage').textContent='統計の登録に失敗しました。Supabaseの設定とRLSを確認してください。'; return; }
-  const {data,error}=await window.supabaseClient.from('exam_results').select('exam1,exam2,exam3,exam4,total_score,judgment');
+  // Supabase側でも問題1〜4がすべて1点以上の行だけを取得し、
+  // 0点を含む登録が統計へ混入しないようにします。
+  const {data,error}=await window.supabaseClient
+    .from('exam_results')
+    .select('exam1,exam2,exam3,exam4,total_score,judgment')
+    .gt('exam1',0)
+    .gt('exam2',0)
+    .gt('exam3',0)
+    .gt('exam4',0);
   if(error){ console.error(error); $('statisticsMessage').textContent='統計の読み込みに失敗しました。'; return; }
   renderStatistics(data||[]);
 }
