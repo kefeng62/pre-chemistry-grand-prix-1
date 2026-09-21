@@ -1,3 +1,4 @@
+console.log('Supabase client:', window.supabaseClient);
 // Supabase設定：Supabase DashboardのProject URLとPublishable key（旧anon key）を入力してください。
 // service_role key / secret keyは絶対に入力しないでください。
 const SUPABASE_URL = 'https://bfjwtyjwqmeixlkqlerj.supabase.co';
