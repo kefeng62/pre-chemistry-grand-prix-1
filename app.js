@@ -248,23 +248,32 @@ function fillFullScore(){
 }
 
 function resetScoring(){
+  const examName = exams[currentExam].name;
+
   const confirmed = confirm(
-    '自己採点をリセットしますか？\n\n入力した全Qの解答と登録状態が削除されます。'
+    `${examName}の自己採点をリセットしますか？\n\n` +
+    `${examName}の解答だけが削除されます。`
   );
 
   if(!confirmed) return;
 
-  state = {
-    submitted: false,
-    answers: {}
-  };
+  // 現在の大問の解答だけ削除
+  exams[currentExam].answers.forEach((answer, index) => {
+    const q = index + 1;
+    delete state.answers[qId(currentExam, q)];
+  });
+
+  // 登録状態を解除（他の大問の解答は保持）
+  state.submitted = false;
 
   saveState();
 
+  // 結果表示をリセット
   $('result').classList.add('hidden');
   $('miniTotal').textContent = '—';
   $('saveMessage').textContent = '';
 
+  // 解答・解説のロックを戻す
   $('answerLink').classList.add('locked');
   $('answerLink').textContent = '🔒 解答・解説';
   $('answerLink').href = '#score';
