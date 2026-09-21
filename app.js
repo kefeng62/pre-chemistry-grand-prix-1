@@ -232,6 +232,55 @@ function showResult(){
   $('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+function fillFullScore(){
+  const exam = exams[currentExam];
+
+  exam.answers.forEach((answer, index) => {
+    const q = index + 1;
+    const accepted = acceptedAnswers(currentExam, q);
+
+    // 複数正答がある場合は最初の正答を使用
+    state.answers[qId(currentExam, q)] = String(accepted[0]);
+  });
+
+  saveState();
+  renderQuestions();
+}
+
+function resetScoring(){
+  const confirmed = confirm(
+    '自己採点をリセットしますか？\n\n入力した全Qの解答と登録状態が削除されます。'
+  );
+
+  if(!confirmed) return;
+
+  state = {
+    submitted: false,
+    answers: {}
+  };
+
+  saveState();
+
+  $('result').classList.add('hidden');
+  $('miniTotal').textContent = '—';
+  $('saveMessage').textContent = '';
+
+  $('answerLink').classList.add('locked');
+  $('answerLink').textContent = '🔒 解答・解説';
+  $('answerLink').href = '#score';
+
+  $('unlockBadge').classList.add('hidden');
+
+  renderQuestions();
+
+  window.scrollTo({
+    top: $('score').offsetTop - 20,
+    behavior: 'smooth'
+  });
+}
+
+$('fullScoreBtn').addEventListener('click', fillFullScore);
+$('resetBtn').addEventListener('click', resetScoring);
 $('submitBtn').addEventListener('click',showResult);
 renderQuestions();
 if(state.submitted) showResult();
