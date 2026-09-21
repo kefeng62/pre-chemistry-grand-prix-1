@@ -67,6 +67,11 @@
       </div>
     </div>
     <div id="breakdown" class="breakdown"></div>
+    <section id="statistics" class="statistics-box">
+      <h3>自己採点登録者の統計</h3>
+      <p id="statisticsMessage" class="small">統計を読み込んでいます。</p>
+      <div id="statisticsContent"></div>
+    </section>
     <div class="share-area">
       <a id="xShare" class="button x-share" href="#" target="_blank" rel="noopener">𝕏 Xで結果をシェア</a>
       <p class="small">各大問の得点・総合得点とサイトのリンクをXに投稿できます。</p>
@@ -103,6 +108,8 @@
 </main>
 
 <footer class="site-footer"><div class="wrap">第一回化学グランプリ模試</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
