@@ -49,8 +49,6 @@ const exams = {
       ['キ',[10,11,12,13]],['ク',[14,15]],['ケ',[16]],['コ',[17]],['サ',[18]],['シ',[19,20]],
       ['ス',[21,22,23,24,25]],['セ',[26]],['ソ',[27]],['タ',[28,29]]
     ],
-
-    // Problem 3 point values are based on the latest answer/explanation PDF.
     groups: [
       {q:[1,2,3],p:3},{q:[4],p:2},{q:[5],p:2},{q:[6],p:3},{q:[7],p:3},{q:[8],p:3},
       {q:[9],p:3},{q:[10],p:3},{q:[11],p:3},{q:[12],p:3},{q:[13],p:3},{q:[14],p:1},
@@ -71,7 +69,6 @@ const exams = {
     groups: [
       {q:[1],p:3},{q:[2],p:2},{q:[3],p:2},{q:[4,5,6],p:5},{q:[7],p:3},{q:[8,9,10],p:6},
       {q:[11,12,13],p:3},{q:[14,15,16],p:3},{q:[17,18],p:5},{q:[19,20],p:4},
-      // Q22 accepts both 6 and 7, so 568 and 578 are both accepted for Q21-Q23.
       {q:[21,22,23],p:6},{q:[24,25,26,27],p:7},{q:[28],p:2},{q:[29],p:2},{q:[30],p:2},
       {q:[31],p:2},{q:[32],p:2},{q:[33],p:2},{q:[34,35],p:3},{q:[36,37],p:8},{q:[38],p:3}
     ],
@@ -84,26 +81,43 @@ const exams = {
 
 
 const STORAGE_KEY = 'chemistry_grandprix_mock_v2';
+const VISITOR_KEY = 'chemistry_grandprix_visitor_id_v1';
 
 let currentExam = 1;
 
 
-// Mobile/Safariのローカルファイル閲覧などでlocalStorageが使えない場合でも、
-// 自己採点画面が止まらないように安全に保存・読み込みします。
+/* =========================
+   localStorage
+========================= */
+
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {submitted:false,answers:{}};
+
+    return raw
+      ? JSON.parse(raw)
+      : {submitted:false, answers:{}};
+
   }catch(e){
-    return {submitted:false,answers:{}};
+
+    return {
+      submitted:false,
+      answers:{}
+    };
+
   }
 }
 
 
 function saveState(){
+
   try{
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(state)
+    );
   }catch(e){}
+
 }
 
 
@@ -112,186 +126,330 @@ let state = loadState();
 const $ = id => document.getElementById(id);
 
 
+/* =========================
+   採点
+========================= */
+
 function qId(exam, q){
   return `e${exam}q${q}`;
 }
 
 
 function acceptedAnswers(examId, q){
+
   const exam = exams[examId];
-  return exam.accepted?.[q] ?? [exam.answers[q-1]];
+
+  return exam.accepted?.[q]
+    ?? [exam.answers[q-1]];
+
 }
 
 
 function isCorrect(examId, q){
-  const value = String(state.answers[qId(examId,q)] ?? '');
 
-  return value !== '' &&
-    acceptedAnswers(examId,q).some(a => String(a) === value);
+  const value =
+    String(state.answers[qId(examId,q)] ?? '');
+
+  return (
+    value !== '' &&
+    acceptedAnswers(examId,q)
+      .some(a => String(a) === value)
+  );
+
 }
 
+
+/* =========================
+   問題タブ
+========================= */
 
 function renderTabs(){
-  $('examTabs').innerHTML = Object.entries(exams).map(([id,e]) =>
-    `<button class="tab ${Number(id)===currentExam?'active':''}" data-exam="${id}">${e.name}</button>`
-  ).join('');
 
-  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
-    currentExam=Number(b.dataset.exam);
-    renderQuestions();
-  }));
+  $('examTabs').innerHTML =
+    Object.entries(exams)
+      .map(([id,e]) => `
+        <button
+          class="tab ${Number(id)===currentExam?'active':''}"
+          data-exam="${id}">
+          ${e.name}
+        </button>
+      `)
+      .join('');
+
+  document
+    .querySelectorAll('.tab')
+    .forEach(b => {
+
+      b.addEventListener('click',()=>{
+
+        currentExam =
+          Number(b.dataset.exam);
+
+        renderQuestions();
+
+      });
+
+    });
+
 }
 
 
+/* =========================
+   問題表示
+========================= */
+
 function renderQuestions(){
+
   renderTabs();
 
-  const exam=exams[currentExam];
+  const exam =
+    exams[currentExam];
 
-  let html='';
+  let html = '';
 
-  exam.labels.forEach(([label, qs])=>{
+  exam.labels.forEach(([label, qs]) => {
 
-    const rows = qs.map(q=>{
+    const rows =
+      qs.map(q => {
 
-      const id=qId(currentExam,q);
-      const saved=state.answers[id] ?? '';
+        const id =
+          qId(currentExam,q);
 
-      const opts = ['','1','2','3','4','5','6','7','8','9','0']
-        .map(v =>
-          `<option value="${v}" ${String(saved)===v?'selected':''}>${v||'— 未入力 —'}</option>`
-        ).join('');
+        const saved =
+          state.answers[id] ?? '';
 
-      const status =
-        state.submitted
-          ? (
-              isCorrect(currentExam,q)
-                ? '<span class="answer-status correct">○ 正解</span>'
-                : (
-                    saved === ''
-                      ? '<span class="answer-status unanswered">— 未入力</span>'
-                      : '<span class="answer-status incorrect">× 不正解</span>'
-                  )
-            )
-          : '<span class="answer-status"></span>';
+        const opts =
+          ['','1','2','3','4','5','6','7','8','9','0']
+            .map(v => `
+              <option
+                value="${v}"
+                ${String(saved)===v?'selected':''}>
+                ${v || '— 未入力 —'}
+              </option>
+            `)
+            .join('');
 
-      return `
-        <div class="qrow">
-          <label for="${id}">Q${q}</label>
-          <div class="answer-control">
-            <select class="mark-select" id="${id}" data-q="${q}">
-              ${opts}
-            </select>
-            ${status}
+        let status = '';
+
+        if(state.submitted){
+
+          if(isCorrect(currentExam,q)){
+
+            status =
+              '<span class="answer-status correct">○ 正解</span>';
+
+          }else if(saved === ''){
+
+            status =
+              '<span class="answer-status unanswered">— 未入力</span>';
+
+          }else{
+
+            status =
+              '<span class="answer-status incorrect">× 不正解</span>';
+
+          }
+
+        }else{
+
+          status =
+            '<span class="answer-status"></span>';
+
+        }
+
+        return `
+          <div class="qrow">
+
+            <label for="${id}">
+              Q${q}
+            </label>
+
+            <div class="answer-control">
+
+              <select
+                class="mark-select"
+                id="${id}"
+                data-q="${q}">
+                ${opts}
+              </select>
+
+              ${status}
+
+            </div>
+
           </div>
-        </div>
-      `;
+        `;
 
-    }).join('');
+      }).join('');
 
     html += `
       <div class="question-group">
+
         <div class="group-title">
+
           <h3>
             問 ${label}
-            <span class="small">${qs.map(q=>'Q'+q).join('・')}</span>
+            <span class="small">
+              ${qs.map(q=>'Q'+q).join('・')}
+            </span>
           </h3>
+
         </div>
-        <div class="qgrid">${rows}</div>
+
+        <div class="qgrid">
+          ${rows}
+        </div>
+
       </div>
     `;
+
   });
 
-  $('questions').innerHTML=html;
+
+  $('questions').innerHTML = html;
 
 
-  document.querySelectorAll('#questions select').forEach(s=>s.addEventListener('change',()=>{
+  document
+    .querySelectorAll('#questions select')
+    .forEach(s => {
 
-    state.answers[s.id]=s.value;
+      s.addEventListener('change',()=>{
 
-    saveState();
+        state.answers[s.id] =
+          s.value;
+
+        saveState();
 
 
-    if(state.submitted){
+        if(state.submitted){
 
-      const row=s.closest('.qrow');
-      const status=row.querySelector('.answer-status');
-      const q=Number(s.dataset.q);
+          const row =
+            s.closest('.qrow');
 
-      status.className =
-        'answer-status ' +
-        (
-          s.value === ''
-            ? 'unanswered'
-            : (
-                isCorrect(currentExam,q)
-                  ? 'correct'
-                  : 'incorrect'
-              )
-        );
-
-      status.textContent =
-        s.value === ''
-          ? '— 未入力'
-          : (
-              isCorrect(currentExam,q)
-                ? '○ 正解'
-                : '× 不正解'
+          const status =
+            row.querySelector(
+              '.answer-status'
             );
-    }
 
-  }));
+          const q =
+            Number(s.dataset.q);
+
+
+          if(s.value === ''){
+
+            status.className =
+              'answer-status unanswered';
+
+            status.textContent =
+              '— 未入力';
+
+          }else if(
+            isCorrect(currentExam,q)
+          ){
+
+            status.className =
+              'answer-status correct';
+
+            status.textContent =
+              '○ 正解';
+
+          }else{
+
+            status.className =
+              'answer-status incorrect';
+
+            status.textContent =
+              '× 不正解';
+
+          }
+
+        }
+
+      });
+
+    });
+
 }
 
 
+/* =========================
+   得点計算
+========================= */
+
 function calcExam(id){
 
-  const e=exams[id];
+  const e =
+    exams[id];
 
-  let score=0;
+  let score = 0;
 
-  e.groups.forEach(g=>{
+  e.groups.forEach(g => {
 
-    if(g.q.every(q=>isCorrect(id,q))){
-      score+=g.p;
+    if(
+      g.q.every(q =>
+        isCorrect(id,q)
+      )
+    ){
+
+      score += g.p;
+
     }
 
   });
 
   return Math.min(score,75);
+
 }
 
 
 function total(){
-  return [1,2,3,4].reduce((s,id)=>s+calcExam(id),0);
+
+  return [1,2,3,4]
+    .reduce(
+      (s,id) => s + calcExam(id),
+      0
+    );
+
 }
 
 
 function getJudgment(score){
 
-  if(score>=250)
+  if(score >= 250)
     return ['A','大賞も狙える実力です！'];
 
-  if(score>=220)
+  if(score >= 220)
     return ['B','合格者平均超えも狙えます！'];
 
-  if(score>=180)
+  if(score >= 180)
     return ['C','本戦出場も夢じゃない！'];
 
-  if(score>=150)
+  if(score >= 150)
     return ['D','これからの対策次第で本戦出場の可能性あり！'];
 
   return ['E','形式に慣れ、とるべき問題を見分けよう！'];
+
 }
 
 
+/* =========================
+   Xシェア
+========================= */
+
 function updateXShare(){
 
-  const scores = [1,2,3,4].map(id => calcExam(id));
+  const scores =
+    [1,2,3,4]
+      .map(id => calcExam(id));
 
-  const t = scores.reduce((sum, score) => sum + score, 0);
+  const t =
+    scores.reduce(
+      (sum,score) => sum + score,
+      0
+    );
 
-  const siteUrl = window.location.href.split('#')[0];
+  const siteUrl =
+    window.location.href.split('#')[0];
 
   const shareText =
     `あなたの第一回化学グランプリ模試の結果は${scores[0]}・${scores[1]}・${scores[2]}・${scores[3]}で${t}点でした！\n${siteUrl}`;
@@ -299,60 +457,587 @@ function updateXShare(){
   $('xShare').href =
     'https://twitter.com/intent/tweet?text=' +
     encodeURIComponent(shareText);
+
 }
 
 
+/* =========================
+   Supabase 統計
+========================= */
+
+const SUPABASE_ENABLED =
+  typeof window.supabaseClient !== 'undefined' &&
+  window.supabaseClient;
+
+
+function getVisitorId(){
+
+  try{
+
+    let id =
+      localStorage.getItem(
+        VISITOR_KEY
+      );
+
+    if(!id){
+
+      id =
+        crypto.randomUUID
+          ? crypto.randomUUID()
+          : 'v-' +
+            Date.now() +
+            '-' +
+            Math.random()
+              .toString(36)
+              .slice(2);
+
+      localStorage.setItem(
+        VISITOR_KEY,
+        id
+      );
+
+    }
+
+    return id;
+
+  }catch(e){
+
+    return (
+      'v-' +
+      Date.now() +
+      '-' +
+      Math.random()
+        .toString(36)
+        .slice(2)
+    );
+
+  }
+
+}
+
+
+function statsGrade(score){
+
+  return getJudgment(score)[0];
+
+}
+
+
+function statNumber(v){
+
+  return Number.isFinite(Number(v))
+    ? Number(v)
+        .toFixed(1)
+        .replace(/\.0$/,'')
+    : '—';
+
+}
+
+
+/* =========================
+   統計表示
+========================= */
+
+function renderStatistics(stats){
+
+  if(!stats){
+
+    $('statisticsMessage').textContent =
+      '統計を読み込めませんでした。';
+
+    return;
+
+  }
+
+
+  const examsStats =
+    [1,2,3,4].map(id => ({
+
+      name:
+        exams[id].name,
+
+      count:
+        Number(
+          stats['exam'+id+'_count']
+          ?? 0
+        ),
+
+      max:
+        stats['exam'+id+'_max'] == null
+          ? null
+          : Number(
+              stats['exam'+id+'_max']
+            ),
+
+      avg:
+        stats['exam'+id+'_avg'] == null
+          ? null
+          : Number(
+              stats['exam'+id+'_avg']
+            )
+
+    }));
+
+
+  const totalCount =
+    Number(
+      stats.total_count ?? 0
+    );
+
+
+  const totalMax =
+    stats.total_max == null
+      ? null
+      : Number(stats.total_max);
+
+
+  const totalAvg =
+    stats.total_avg == null
+      ? null
+      : Number(stats.total_avg);
+
+
+  const grades =
+    stats.grades || {};
+
+
+  const summary = `
+    <div class="stats-summary">
+
+      <div>
+        <strong>総合登録者数</strong>
+        <span>${totalCount}人</span>
+      </div>
+
+      <div>
+        <strong>総合最高点</strong>
+        <span>
+          ${
+            totalMax === null
+              ? '—'
+              : totalMax + '点'
+          }
+        </span>
+      </div>
+
+      <div>
+        <strong>総合平均点</strong>
+        <span>
+          ${
+            totalAvg === null
+              ? '—'
+              : statNumber(totalAvg) + '点'
+          }
+        </span>
+      </div>
+
+    </div>
+  `;
+
+
+  const table = `
+    <div class="stats-table-wrap">
+
+      <table class="stats-table">
+
+        <thead>
+
+          <tr>
+            <th>対象</th>
+            <th>登録者数</th>
+            <th>最高点</th>
+            <th>平均点</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          ${
+            examsStats
+              .map(x => `
+                <tr>
+
+                  <td>${x.name}</td>
+
+                  <td>
+                    ${x.count}人
+                  </td>
+
+                  <td>
+                    ${
+                      x.max === null
+                        ? '—'
+                        : x.max + '点'
+                    }
+                  </td>
+
+                  <td>
+                    ${
+                      x.avg === null
+                        ? '—'
+                        : statNumber(x.avg) + '点'
+                    }
+                  </td>
+
+                </tr>
+              `)
+              .join('')
+          }
+
+          <tr>
+
+            <td>
+              <strong>総合得点</strong>
+            </td>
+
+            <td>
+              ${totalCount}人
+            </td>
+
+            <td>
+              ${
+                totalMax === null
+                  ? '—'
+                  : totalMax + '点'
+              }
+            </td>
+
+            <td>
+              ${
+                totalAvg === null
+                  ? '—'
+                  : statNumber(totalAvg) + '点'
+              }
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <h4>判定別人数</h4>
+
+    <div class="grade-stats">
+
+      ${
+        ['A','B','C','D','E']
+          .map(g => `
+            <span>
+              <strong>${g}</strong>
+              ${Number(grades[g] || 0)}人
+            </span>
+          `)
+          .join('')
+      }
+
+    </div>
+  `;
+
+
+  $('statisticsContent').innerHTML =
+    summary + table;
+
+
+  $('statisticsMessage').textContent =
+    '匿名で登録された自己採点結果を集計しています。';
+
+}
+
+
+/* =========================
+   Supabaseへ保存・統計取得
+========================= */
+
+async function saveAndLoadStatistics(){
+
+  if(!SUPABASE_ENABLED){
+
+    $('statisticsMessage').textContent =
+      '統計機能は現在利用できません。';
+
+    return;
+
+  }
+
+
+  try{
+
+    const scores =
+      [1,2,3,4]
+        .map(id => calcExam(id));
+
+
+    const totalScore =
+      scores.reduce(
+        (a,b) => a+b,
+        0
+      );
+
+
+    const row = {
+
+      visitor_id:
+        getVisitorId(),
+
+      answers:
+        state.answers,
+
+      exam1:
+        scores[0],
+
+      exam2:
+        scores[1],
+
+      exam3:
+        scores[2],
+
+      exam4:
+        scores[3],
+
+      total_score:
+        totalScore,
+
+      judgment:
+        statsGrade(totalScore)
+
+    };
+
+
+    /*
+      ここではRPC submit_examではなく、
+      exam_submissionsへ直接upsertする。
+
+      admin.jsも同じテーブルを参照しているため、
+      参加者側と管理画面側のデータ形式を統一する。
+    */
+
+    const {
+      error: upsertError
+    } =
+      await window.supabaseClient
+        .from('exam_submissions')
+        .upsert(
+          row,
+          {
+            onConflict:
+              'visitor_id'
+          }
+        );
+
+
+    if(upsertError){
+
+      console.error(
+        'Supabase submission error:',
+        upsertError
+      );
+
+      /*
+        統計保存に失敗しても
+        自己採点そのものは成功扱いにする。
+      */
+
+      $('statisticsMessage').textContent =
+        '統計への登録はできませんでしたが、自己採点結果は正常に表示されています。';
+
+      return;
+
+    }
+
+
+    /*
+      保存成功後に統計を取得
+    */
+
+    const {
+      data,
+      error
+    } =
+      await window.supabaseClient
+        .rpc(
+          'get_exam_statistics'
+        );
+
+
+    if(error){
+
+      console.error(
+        'Statistics RPC error:',
+        error
+      );
+
+      $('statisticsMessage').textContent =
+        '自己採点は登録されましたが、統計の読み込みに失敗しました。';
+
+      return;
+
+    }
+
+
+    renderStatistics(data);
+
+  }catch(error){
+
+    /*
+      ここが今回の重要部分。
+
+      Supabaseで何が起きても、
+      showResult()側の自己採点処理には
+      エラーを伝播させない。
+    */
+
+    console.error(
+      'Statistics error:',
+      error
+    );
+
+    $('statisticsMessage').textContent =
+      '自己採点は正常に完了しました。統計の読み込みのみ失敗しました。';
+
+  }
+
+}
+
+
+/* =========================
+   結果表示
+========================= */
+
 function showResult(){
 
-  const t=total();
+  /*
+    まずローカルで採点
+  */
 
-  const [grade,message]=getJudgment(t);
+  const t =
+    total();
 
+  const [grade,message] =
+    getJudgment(t);
+
+
+  /*
+    結果画面を先に表示する。
+    Supabaseには依存しない。
+  */
 
   $('saveMessage').textContent =
     '自己採点を完了しました。解答・解説のロックが解除されています。';
 
 
-  $('result').classList.remove('hidden');
-
-  $('totalScore').textContent=t;
-
-  $('miniTotal').textContent=t;
-
-  $('scoreRate').textContent=(t/3).toFixed(1)+'%';
-
-  $('judgmentGrade').textContent=grade;
-
-  $('judgmentMessage').textContent=message;
+  $('result')
+    .classList
+    .remove('hidden');
 
 
-  $('breakdown').innerHTML=[1,2,3,4].map(id=>
-    `<div class="breakdown-item">
-      <strong>${calcExam(id)} / 75</strong>
-      <span>${exams[id].name}</span>
-    </div>`
-  ).join('');
+  $('totalScore').textContent =
+    t;
+
+
+  $('miniTotal').textContent =
+    t;
+
+
+  $('scoreRate').textContent =
+    (t / 3).toFixed(1) + '%';
+
+
+  $('judgmentGrade').textContent =
+    grade;
+
+
+  $('judgmentMessage').textContent =
+    message;
+
+
+  $('breakdown').innerHTML =
+    [1,2,3,4]
+      .map(id => `
+        <div class="breakdown-item">
+
+          <strong>
+            ${calcExam(id)} / 75
+          </strong>
+
+          <span>
+            ${exams[id].name}
+          </span>
+
+        </div>
+      `)
+      .join('');
 
 
   updateXShare();
 
 
-  $('answerLink').classList.remove('locked');
+  /*
+    解答・解説のロック解除
+  */
 
-  $('answerLink').textContent='🔓 解答・解説を見る';
-
-  $('answerLink').href='pdfs/answer.pdf';
-
-
-  $('unlockBadge').classList.remove('hidden');
+  $('answerLink')
+    .classList
+    .remove('locked');
 
 
-  state.submitted=true;
+  $('answerLink').textContent =
+    '🔓 解答・解説を見る';
+
+
+  $('answerLink').href =
+    'pdfs/answer.pdf';
+
+
+  $('unlockBadge')
+    .classList
+    .remove('hidden');
+
+
+  /*
+    ローカル状態を保存
+  */
+
+  state.submitted =
+    true;
 
   saveState();
 
+
+  /*
+    正誤表示を更新
+  */
+
   renderQuestions();
 
+
+  /*
+    ここから先は統計。
+
+    非同期で実行するが、
+    自己採点処理を待たない。
+
+    つまりSupabaseでエラーが出ても
+    上の結果表示には影響しない。
+  */
+
+  saveAndLoadStatistics()
+    .catch(error => {
+
+      console.error(
+        'Unexpected statistics error:',
+        error
+      );
+
+    });
+
+
+  /*
+    結果までスクロール
+  */
 
   $('result').scrollIntoView({
     behavior:'smooth',
@@ -362,102 +1047,206 @@ function showResult(){
 }
 
 
+/* =========================
+   大問を一括満点
+========================= */
+
 function fillFullScore(){
 
-  const exam = exams[currentExam];
+  const exam =
+    exams[currentExam];
 
 
-  exam.answers.forEach((answer, index) => {
+  exam.answers.forEach(
+    (answer,index) => {
 
-    const q = index + 1;
+      const q =
+        index + 1;
 
-    const accepted = acceptedAnswers(currentExam, q);
+      const accepted =
+        acceptedAnswers(
+          currentExam,
+          q
+        );
 
 
-    // 複数正答がある場合は最初の正答を使用
-    state.answers[qId(currentExam, q)] = String(accepted[0]);
+      /*
+        複数正答がある場合は
+        最初の正答を使用
+      */
 
-  });
+      state.answers[
+        qId(currentExam,q)
+      ] =
+        String(accepted[0]);
+
+    }
+  );
 
 
   saveState();
 
   renderQuestions();
+
 }
 
 
+/* =========================
+   大問をリセット
+========================= */
+
 function resetScoring(){
 
-  const examName = exams[currentExam].name;
+  const examName =
+    exams[currentExam].name;
 
 
-  const confirmed = confirm(
-    `${examName}の自己採点をリセットしますか？\n\n` +
-    `${examName}の解答だけが削除されます。`
-  );
+  const confirmed =
+    confirm(
+      `${examName}の自己採点をリセットしますか？\n\n` +
+      `${examName}の解答だけが削除されます。`
+    );
 
 
-  if(!confirmed) return;
+  if(!confirmed)
+    return;
 
 
-  // 現在の大問の解答だけ削除
-  exams[currentExam].answers.forEach((answer, index) => {
+  /*
+    現在の大問だけ削除
+  */
 
-    const q = index + 1;
+  exams[currentExam]
+    .answers
+    .forEach(
+      (answer,index) => {
 
-    delete state.answers[qId(currentExam, q)];
+        const q =
+          index + 1;
 
-  });
+        delete state.answers[
+          qId(currentExam,q)
+        ];
+
+      }
+    );
 
 
-  // 登録状態を解除（他の大問の解答は保持）
-  state.submitted = false;
+  /*
+    登録状態を解除
+  */
+
+  state.submitted =
+    false;
 
 
   saveState();
 
 
-  // 結果表示をリセット
-  $('result').classList.add('hidden');
+  /*
+    結果表示をリセット
+  */
 
-  $('miniTotal').textContent = '—';
-
-  $('saveMessage').textContent = '';
-
-
-  // 解答・解説のロックを戻す
-  $('answerLink').classList.add('locked');
-
-  $('answerLink').textContent = '🔒 解答・解説';
-
-  $('answerLink').href = '#score';
+  $('result')
+    .classList
+    .add('hidden');
 
 
-  $('unlockBadge').classList.add('hidden');
+  $('miniTotal').textContent =
+    '—';
 
+
+  $('saveMessage').textContent =
+    '';
+
+
+  /*
+    解答・解説をロック
+  */
+
+  $('answerLink')
+    .classList
+    .add('locked');
+
+
+  $('answerLink').textContent =
+    '🔒 解答・解説';
+
+
+  $('answerLink').href =
+    '#score';
+
+
+  $('unlockBadge')
+    .classList
+    .add('hidden');
+
+
+  /*
+    問題表示更新
+  */
 
   renderQuestions();
 
 
   window.scrollTo({
-    top: $('score').offsetTop - 20,
-    behavior: 'smooth'
+
+    top:
+      $('score').offsetTop - 20,
+
+    behavior:
+      'smooth'
+
   });
 
 }
 
 
-// イベント登録
-$('fullScoreBtn').addEventListener('click', fillFullScore);
+/* =========================
+   初期化
+========================= */
 
-$('resetBtn').addEventListener('click', resetScoring);
+document.addEventListener(
+  'DOMContentLoaded',
+  () => {
 
-$('submitBtn').addEventListener('click', showResult);
+    $('fullScoreBtn')
+      .addEventListener(
+        'click',
+        fillFullScore
+      );
 
 
-// 初期表示
-renderQuestions();
+    $('resetBtn')
+      .addEventListener(
+        'click',
+        resetScoring
+      );
 
 
-// 以前に自己採点済みなら結果を復元
-if(state.submitted) showResult();
+    $('submitBtn')
+      .addEventListener(
+        'click',
+        showResult
+      );
+
+
+    renderQuestions();
+
+
+    /*
+      以前に自己採点済みなら
+      結果を復元する。
+
+      この場合もSupabaseの統計処理は
+      showResult()内で安全に実行される。
+    */
+
+    if(state.submitted){
+
+      showResult();
+
+    }
+
+  }
+);
