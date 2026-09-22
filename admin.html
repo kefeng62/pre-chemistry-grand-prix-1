@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>化学グランプリ模試 管理画面</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header><div class="wrap"><h1>第一回化学グランプリ模試 ― 管理画面</h1><span id="userLabel"></span></div></header>
+<main class="wrap">
+  <section id="loginCard" class="card">
+    <h2>管理者ログイン</h2>
+    <p class="muted">Supabase Authで作成した管理者アカウントでログインしてください。</p>
+    <form id="loginForm">
+      <label>メールアドレス<input id="email" type="email" autocomplete="username" required></label>
+      <label>パスワード<input id="password" type="password" autocomplete="current-password" required></label>
+      <button>ログイン</button>
+    </form>
+    <p id="loginMessage" class="error"></p>
+  </section>
+
+  <section id="adminCard" class="hidden">
+    <div class="toolbar card">
+      <div><strong id="countLabel">—</strong><span class="muted"> 件の答案</span></div>
+      <div class="toolbar-actions"><button id="reloadBtn">再読み込み</button><button id="csvBtn">CSV出力</button><button id="logoutBtn" class="secondary">ログアウト</button></div>
+    </div>
+    <section class="card">
+      <h2>受験者一覧</h2>
+      <div class="filters"><input id="search" placeholder="受験者IDで検索"><select id="examFilter"><option value="all">すべて</option><option value="wrong">1問以上不正解</option></select></div>
+      <div class="table-wrap"><table><thead><tr><th>受験者ID</th><th>提出日時</th><th>得点</th><th>判定</th><th>操作</th></tr></thead><tbody id="rows"></tbody></table></div>
+    </section>
+    <section id="detailCard" class="card hidden">
+      <div class="detail-head"><div><h2 id="detailTitle">答案詳細</h2><p id="detailMeta" class="muted"></p></div><button id="closeDetail" class="secondary">閉じる</button></div>
+      <div id="wrongSummary"></div>
+      <div id="detailQuestions"></div>
+    </section>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
