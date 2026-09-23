@@ -184,12 +184,14 @@ function getVisitorId(){
 function statsGrade(score){ return getJudgment(score)[0]; }
 function statNumber(v){ return Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') : '—'; }
 function renderStatistics(rows){
+  // 問題1〜4のいずれかが0点の登録は、統計の対象外にします。
+  const eligibleRows = rows.filter(r => [1,2,3,4].every(id => Number(r['exam'+id]) > 0));
   const examsStats = [1,2,3,4].map(id=>{
-    const values=rows.map(r=>Number(r['exam'+id])).filter(Number.isFinite);
+    const values=eligibleRows.map(r=>Number(r['exam'+id])).filter(Number.isFinite);
     return {name:exams[id].name, count:values.length, max:values.length?Math.max(...values):null, avg:values.length?values.reduce((a,b)=>a+b,0)/values.length:null};
   });
-  const totals=rows.map(r=>Number(r.total_score)).filter(Number.isFinite);
-  const grades=['A','B','C','D','E'].map(g=>({grade:g,count:rows.filter(r=>r.judgment===g).length}));
+  const totals=eligibleRows.map(r=>Number(r.total_score)).filter(Number.isFinite);
+  const grades=['A','B','C','D','E'].map(g=>({grade:g,count:eligibleRows.filter(r=>r.judgment===g).length}));
   const summary=`<div class="stats-summary"><div><strong>総合登録者数</strong><span>${totals.length}人</span></div><div><strong>総合最高点</strong><span>${totals.length?Math.max(...totals):'—'}点</span></div><div><strong>総合平均点</strong><span>${totals.length?statNumber(totals.reduce((a,b)=>a+b,0)/totals.length):'—'}点</span></div></div>`;
   const table=`<div class="stats-table-wrap"><table class="stats-table"><thead><tr><th>対象</th><th>登録者数</th><th>最高点</th><th>平均点</th></tr></thead><tbody>${examsStats.map(x=>`<tr><td>${x.name}</td><td>${x.count}人</td><td>${x.max===null?'—':x.max+'点'}</td><td>${x.avg===null?'—':statNumber(x.avg)+'点'}</td></tr>`).join('')}<tr><td><strong>総合得点</strong></td><td>${totals.length}人</td><td>${totals.length?Math.max(...totals)+'点':'—'}</td><td>${totals.length?statNumber(totals.reduce((a,b)=>a+b,0)/totals.length)+'点':'—'}</td></tr></tbody></table></div><h4>判定別人数</h4><div class="grade-stats">${grades.map(g=>`<span><strong>${g.grade}</strong> ${g.count}人</span>`).join('')}</div>`;
   $('statisticsContent').innerHTML=summary+table;
@@ -230,6 +232,67 @@ function showResult(){
   $('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
+function fillFullScore(){
+  const exam = exams[currentExam];
+
+  exam.answers.forEach((answer, index) => {
+    const q = index + 1;
+    const accepted = acceptedAnswers(currentExam, q);
+
+    // 複数正答がある場合は最初の正答を使用
+    state.answers[qId(currentExam, q)] = String(accepted[0]);
+  });
+
+  saveState();
+  renderQuestions();
+}
+
+function resetScoring(){
+  const examName = exams[currentExam].name;
+
+  const confirmed = confirm(
+    `${examName}の自己採点をリセットしますか？\n\n` +
+    `${examName}の解答だけが削除されます。`
+  );
+
+  if(!confirmed) return;
+
+  // 現在の大問の解答だけ削除
+  exams[currentExam].answers.forEach((answer, index) => {
+    const q = index + 1;
+    delete state.answers[qId(currentExam, q)];
+  });
+
+  // 登録状態を解除（他の大問の解答は保持）
+  state.submitted = false;
+
+  saveState();
+
+  // 結果表示をリセット
+  $('result').classList.add('hidden');
+  $('miniTotal').textContent = '—';
+  $('saveMessage').textContent = '';
+
+  // 解答・解説のロックを戻す
+  $('answerLink').classList.add('locked');
+  $('answerLink').textContent = '🔒 解答・解説';
+  $('answerLink').href = '#score';
+
+  $('unlockBadge').classList.add('hidden');
+
+  renderQuestions();
+
+  window.scrollTo({
+    top: $('score').offsetTop - 20,
+    behavior: 'smooth'
+  });
+}
+
+$('fullScoreBtn').addEventListener('click', fillFullScore);
+$('resetBtn').addEventListener('click', resetScoring);
 $('submitBtn').addEventListener('click',showResult);
 renderQuestions();
 if(state.submitted) showResult();
+
+$('fullScoreBtn').addEventListener('click', fillFullScore);
+$('resetBtn').addEventListener('click', resetScoring);
