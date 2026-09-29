@@ -183,9 +183,15 @@ function getVisitorId(){
 }
 function statsGrade(score){ return getJudgment(score)[0]; }
 function statNumber(v){ return Number.isFinite(Number(v)) ? Number(v).toFixed(1).replace(/\.0$/,'') : '—'; }
+function isEligibleStatsRow(r){
+  // 問題1〜4の得点がすべて数値で、かつ1点以上の登録だけを統計対象にする。
+  return [1,2,3,4].every(id => {
+    const value = Number(r['exam'+id]);
+    return Number.isFinite(value) && value > 0;
+  });
+}
 function renderStatistics(rows){
-  // 問題1〜4のいずれかが0点の登録は、統計の対象外にします。
-  const eligibleRows = rows.filter(r => [1,2,3,4].every(id => Number(r['exam'+id]) > 0));
+  const eligibleRows = (rows || []).filter(isEligibleStatsRow);
   const examsStats = [1,2,3,4].map(id=>{
     const values=eligibleRows.map(r=>Number(r['exam'+id])).filter(Number.isFinite);
     return {name:exams[id].name, count:values.length, max:values.length?Math.max(...values):null, avg:values.length?values.reduce((a,b)=>a+b,0)/values.length:null};
@@ -203,15 +209,12 @@ async function saveAndLoadStatistics(){
   const totalScore=scores.reduce((a,b)=>a+b,0);
   const row={visitor_id:getVisitorId(),exam1:scores[0],exam2:scores[1],exam3:scores[2],exam4:scores[3],total_score:totalScore,judgment:statsGrade(totalScore)};
   const {error:upsertError}=await window.supabaseClient.from('exam_results').upsert(row,{onConflict:'visitor_id'});
-if(upsertError){
-  console.error('Supabase error:', upsertError);
-
-  $('statisticsMessage').textContent =
-    `エラーコード: ${upsertError.code || 'なし'} / ${upsertError.message}`;
-
-  return;
-}
-  const {data,error}=await window.supabaseClient.from('exam_results').select('exam1,exam2,exam3,exam4,total_score,judgment');
+  if(upsertError){ console.error(upsertError); $('statisticsMessage').textContent='統計の登録に失敗しました。Supabaseの設定とRLSを確認してください。'; return; }
+  // いったん全対象行を取得し、JavaScript側で厳密に除外する。
+  // これにより、問題1〜4のいずれかが0点の行は必ず統計対象外になる。
+  const {data,error}=await window.supabaseClient
+    .from('exam_results')
+    .select('exam1,exam2,exam3,exam4,total_score,judgment');
   if(error){ console.error(error); $('statisticsMessage').textContent='統計の読み込みに失敗しました。'; return; }
   renderStatistics(data||[]);
 }
@@ -239,67 +242,6 @@ function showResult(){
   $('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function fillFullScore(){
-  const exam = exams[currentExam];
-
-  exam.answers.forEach((answer, index) => {
-    const q = index + 1;
-    const accepted = acceptedAnswers(currentExam, q);
-
-    // 複数正答がある場合は最初の正答を使用
-    state.answers[qId(currentExam, q)] = String(accepted[0]);
-  });
-
-  saveState();
-  renderQuestions();
-}
-
-function resetScoring(){
-  const examName = exams[currentExam].name;
-
-  const confirmed = confirm(
-    `${examName}の自己採点をリセットしますか？\n\n` +
-    `${examName}の解答だけが削除されます。`
-  );
-
-  if(!confirmed) return;
-
-  // 現在の大問の解答だけ削除
-  exams[currentExam].answers.forEach((answer, index) => {
-    const q = index + 1;
-    delete state.answers[qId(currentExam, q)];
-  });
-
-  // 登録状態を解除（他の大問の解答は保持）
-  state.submitted = false;
-
-  saveState();
-
-  // 結果表示をリセット
-  $('result').classList.add('hidden');
-  $('miniTotal').textContent = '—';
-  $('saveMessage').textContent = '';
-
-  // 解答・解説のロックを戻す
-  $('answerLink').classList.add('locked');
-  $('answerLink').textContent = '🔒 解答・解説';
-  $('answerLink').href = '#score';
-
-  $('unlockBadge').classList.add('hidden');
-
-  renderQuestions();
-
-  window.scrollTo({
-    top: $('score').offsetTop - 20,
-    behavior: 'smooth'
-  });
-}
-
-$('fullScoreBtn').addEventListener('click', fillFullScore);
-$('resetBtn').addEventListener('click', resetScoring);
 $('submitBtn').addEventListener('click',showResult);
 renderQuestions();
 if(state.submitted) showResult();
-
-$('fullScoreBtn').addEventListener('click', fillFullScore);
-$('resetBtn').addEventListener('click', resetScoring);
