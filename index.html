@@ -1,185 +1,116 @@
-```html
 <!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#111827">
-
-<title>化学模試まとめ</title>
-<meta name="description" content="化学模試まとめ｜共通テスト模試・記述模試・冠模試・化学グランプリ模試">
-
-<link rel="stylesheet" href="style.css">
-
-<style>
-/* 冠模試：横スクロール */
-.mock-grid-scroll {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 4px 2px 16px;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-}
-
-.mock-grid-scroll .mock-card {
-  flex: 0 0 280px;
-  min-width: 0;
-  scroll-snap-align: start;
-}
-
-/* スマートフォン */
-@media (max-width: 600px) {
-  .mock-grid-scroll .mock-card {
-    flex-basis: 78%;
-  }
-}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>第一回化学グランプリ模試</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
 <header class="site-header">
-  <div class="wrap">
-    <p class="eyebrow">CHEMISTRY MOCK EXAMS</p>
-    <h1>化学模試まとめ</h1>
-    <p class="lead">私が作成した化学模試をここにまとめています。</p>
-    <p class="writer">
-      Writer：けふぇん（
-      <a href="https://x.com/samarium62ch"
-         target="_blank"
-         rel="noopener">@samarium62ch</a>
-      ）
-    </p>
+  <div class="wrap header-inner">
+    <div>
+      <div class="eyebrow">CHEMISTRY GRAND PRIX MOCK</div>
+      <div class="title-row">
+        <h1>第一回化学グランプリ模試</h1>
+        <div class="credits">
+          <span>Writer：けふぇん（<a href="https://x.com/samarium62ch" target="_blank" rel="noopener">@samarium62ch</a>）</span>
+          <span>Tester：Shou（<a href="https://x.com/gis81g" target="_blank" rel="noopener">@gis81g</a>）</span>
+        </div>
+      </div>
+    </div>
+    <span id="unlockBadge" class="badge hidden">自己採点登録済み</span>
+    <a class="summary-link" href="https://kefeng62.github.io/-chemistry-mock-kefene/">化学模試まとめ</a>
   </div>
 </header>
 
 <main class="wrap">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">一次選考</p>
+      <h2>問題を閲覧して、自己採点できます。</h2>
+      <p>試験時間は150分で、電卓の使用が可能です。</p>
+    </div>
+    <div class="hero-actions">
+      <a class="button primary" href="pdfs/question.pdf">問題PDFを開く</a>
+      <a id="answerLink" class="button secondary locked" href="#score">🔒 解答・解説</a>
+    </div>
+  </section>
 
-  <!-- 01 共通テスト模試 -->
-  <section class="category">
-    <div class="category-title">
-      <span class="category-number">01</span>
+  <section class="card" id="score">
+    <div class="section-head">
       <div>
-        <h2>共通テスト模試</h2>
-        <p>共通テスト形式の化学模試</p>
+        <p class="eyebrow">SELF SCORING</p>
+        <h2>自己採点</h2>
+      </div>
+      <div class="total-mini">合計 <strong id="miniTotal">—</strong> / 300</div>
+    </div>
+    <p class="notice">各 Q の欄を、実際のマークシートと同じ数字（①〜⓪ → 1〜0）で入力してください。複数の正答がある設問は、正答として示されている数字をいずれも正解として判定します。「自己採点を登録」を押すと総合得点が表示され、解答・解説が閲覧可能になります。</p>
+    <div id="examTabs" class="tabs"></div>
+    <div id="questions"></div>
+    <div class="submit-area">
+      <button id="submitBtn" class="button primary large">自己採点を登録して得点を表示</button>
+      <p id="saveMessage" class="save-message"></p>
+    </div>
+  </section>
+
+  <section id="result" class="result card hidden">
+    <p class="eyebrow">RESULT</p>
+    <h2>自己採点結果</h2>
+    <div class="score-big"><span id="totalScore">0</span><small> / 300</small></div>
+    <div class="rate" id="scoreRate">0.0%</div>
+    <div class="judgment-box">
+      <div class="judgment-grade" id="judgmentGrade">—</div>
+      <div>
+        <strong id="judgmentMessage">—</strong>
+        <p>得点に応じた判定です。</p>
       </div>
     </div>
-
-    <div class="mock-grid">
-      <div class="empty-card">公開されている模試はありません。</div>
+    <div id="breakdown" class="breakdown"></div>
+    <section id="statistics" class="statistics-box">
+      <h3>自己採点登録者の統計</h3>
+      <p class="small">問題1〜4のいずれかの得点が0点の場合、統計に集計されません。</p>
+      <p id="statisticsMessage" class="small">統計を読み込んでいます。</p>
+      <div id="statisticsContent"></div>
+    </section>
+    <div class="share-area">
+      <a id="xShare" class="button x-share" href="#" target="_blank" rel="noopener">𝕏 Xで結果をシェア</a>
+      <p class="small">各大問の得点・総合得点とサイトのリンクをXに投稿できます。</p>
+    </div>
+    <div class="judgment-table-wrap">
+      <h3>判定基準</h3>
+      <table class="judgment-table">
+        <thead><tr><th>得点</th><th>判定</th></tr></thead>
+        <tbody>
+          <tr><td>250〜300点</td><td>A</td></tr>
+          <tr><td>220〜249点</td><td>B</td></tr>
+          <tr><td>180〜219点</td><td>C</td></tr>
+          <tr><td>150〜179点</td><td>D</td></tr>
+          <tr><td>0〜149点</td><td>E</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="unlock-box">
+      <div><strong>🔓 解答・解説のロックが解除されました</strong><p>この端末・ブラウザでは、今後もロック解除状態を維持します。</p></div>
+      <a class="button primary" href="pdfs/answer.pdf">解答・解説PDFを開く</a>
     </div>
   </section>
 
-  <!-- 02 記述模試 -->
-  <section class="category">
-    <div class="category-title">
-      <span class="category-number">02</span>
-      <div>
-        <h2>記述模試</h2>
-        <p>記述式の化学模試</p>
-      </div>
-    </div>
-
-    <div class="mock-grid">
-      <div class="empty-card">公開されている模試はありません。</div>
-    </div>
-  </section>
-
-  <!-- 03 冠模試 -->
-  <section class="category">
-    <div class="category-title">
-      <span class="category-number">03</span>
-      <div>
-        <h2>冠模試</h2>
-        <p>各大学の形式の化学模試</p>
-      </div>
-    </div>
-
-    <div class="mock-grid mock-grid-scroll">
-
-      <!-- 東大化学模試 -->
-      <a class="mock-card"
-         href="https://kefeng62.github.io/todai-chemistry-pre1/">
-
-        <div class="thumb-wrap">
-          <img
-            src="https://kefeng62.github.io/todai-chemistry-pre1/thumbnail.png"
-            alt="第一回東大化学模試 サムネイル">
-        </div>
-
-        <div class="mock-info">
-          <h3>第一回東大化学模試</h3>
-          <p class="date">公開日時：2026年9月29日</p>
-        </div>
-      </a>
-
-      <!-- 東北大化学模試 -->
-      <a class="mock-card"
-         href="https://kefeng62.github.io/tohokudai-chemistry-pre1/">
-
-        <div class="thumb-wrap">
-          <img
-            src="https://kefeng62.github.io/tohokudai-chemistry-pre1/thumbnail2.png"
-            alt="第一回東北大化学模試 サムネイル">
-        </div>
-
-        <div class="mock-info">
-          <h3>第一回東北大化学模試</h3>
-          <p class="date">公開日時：2026年10月10日</p>
-        </div>
-      </a>
-
-    </div>
-  </section>
-
-  <!-- 04 化学グランプリ模試 -->
-  <section class="category">
-    <div class="category-title">
-      <span class="category-number">04</span>
-      <div>
-        <h2>化学グランプリ模試</h2>
-        <p>化学グランプリ形式の模試</p>
-      </div>
-    </div>
-
-    <div class="mock-grid">
-      <a class="mock-card"
-         href="https://kefeng62.github.io/pre-chemistry-grand-prix-1/">
-
-        <div class="thumb-wrap">
-          <img
-            src="chemistry-grand-prix-1.png"
-            alt="第一回化学グランプリ模試 サムネイル">
-        </div>
-
-        <div class="mock-info">
-          <h3>第一回化学グランプリ模試</h3>
-          <p class="date">公開日時：2026年9月22日</p>
-        </div>
-      </a>
-    </div>
-  </section>
-
-  <!-- 注意書き -->
-  <section class="card notice-card">
-    <ul>
-      <li>マーク模試には自己採点入力機能が付随しています。</li>
-      <li>記述模試は私のTwitterアカウントのDMへ答案を送っていただければ採点いたします。</li>
-      <li>問題や答案、結果をSNSに投稿していただいて構いません。</li>
-      <li>Testerをやってみたい方はいつでも連絡ください！</li>
-    </ul>
-  </section>
-
+  <section class="card guide">
+    <h2>使い方</h2>
+    <ol>
+      <li>「問題PDFを開く」から問題冊子を閲覧します。</li>
+      <li>各 Q の自分の解答を入力します。</li>
+      <li>「自己採点を登録して得点を表示」を押します。</li>
+      <li>総合得点と各問題の得点が表示され、解答・解説PDFが開けるようになります。</li>
+    </ol>
+      </section>
 </main>
 
-<footer class="site-footer">
-  <div class="wrap">化学模試まとめ</div>
-</footer>
-
+<footer class="site-footer"><div class="wrap">第一回化学グランプリ模試</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="app.js?v=20"></script>
 </body>
 </html>
-```
